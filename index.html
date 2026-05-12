@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="เว็บพยากรณ์ PM2.5 รายชั่วโมงรายจังหวัดในภาคเหนือของประเทศไทย" />
+    <meta name="theme-color" content="#276ef1" />
+    <title>พยากรณ์ PM2.5 ภาคเหนือ</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Northern Thailand PM2.5 Forecast</p>
+          <h1>พยากรณ์ PM2.5 ภาคเหนือรายจังหวัด</h1>
+          <p class="subtitle">15 พฤษภาคม 2569 ถึง 15 พฤษภาคม 2570 | พยากรณ์รายชั่วโมง 24 ชั่วโมง</p>
+        </div>
+        <div class="date-controls" aria-label="เลือกวันที่พยากรณ์">
+          <button class="icon-button" id="prevDay" type="button" aria-label="วันก่อนหน้า">‹</button>
+          <input id="datePicker" type="date" />
+          <button class="icon-button" id="nextDay" type="button" aria-label="วันถัดไป">›</button>
+        </div>
+      </header>
+
+      <main class="dashboard">
+        <section class="map-area" aria-label="แผนที่พยากรณ์ PM2.5 รายจังหวัดภาคเหนือ">
+          <div class="map-toolbar">
+            <div>
+              <p class="current-label">วันและเวลาพยากรณ์</p>
+              <h2 id="activeDateLabel">กำลังโหลดข้อมูล</h2>
+              <p id="activeTimeLabel" class="active-time">-</p>
+            </div>
+            <div class="timeline-controls">
+              <label>
+                <span>วัน</span>
+                <input id="dateRange" type="range" min="0" value="0" />
+              </label>
+              <label>
+                <span>ชั่วโมง</span>
+                <input id="hourRange" type="range" min="0" max="23" value="7" />
+              </label>
+            </div>
+          </div>
+          <div class="map-frame">
+            <svg id="provinceMap" viewBox="0 0 1000 780" role="img" aria-label="แผนที่จังหวัดภาคเหนือแสดงระดับ PM2.5"></svg>
+            <div id="mapTooltip" class="map-tooltip" hidden></div>
+          </div>
+          <div id="hourChips" class="hour-strip" aria-label="เลือกชั่วโมงพยากรณ์"></div>
+          <div class="legend" aria-label="เกณฑ์ PM2.5">
+            <div><span style="background:#4aa8ff"></span>0-15 ดีมาก</div>
+            <div><span style="background:#22b573"></span>15.1-25 ดี</div>
+            <div><span style="background:#f3c74d"></span>25.1-37.5 ปานกลาง</div>
+            <div><span style="background:#f08a35"></span>37.6-75 เริ่มมีผลกระทบ</div>
+            <div><span style="background:#d94b4b"></span>&gt;75 มีผลกระทบมาก</div>
+          </div>
+        </section>
+
+        <aside class="side-panel" aria-label="ข้อมูลสรุป PM2.5">
+          <section class="summary-grid">
+            <article class="stat-card">
+              <p>เฉลี่ยช่วงเวลานี้</p>
+              <strong id="avgPm25">-</strong>
+              <span>µg/m³</span>
+            </article>
+            <article class="stat-card">
+              <p>จังหวัดสูงสุด</p>
+              <strong id="highestProvince">-</strong>
+              <span id="highestValue">-</span>
+            </article>
+          </section>
+
+          <section class="province-detail">
+            <p class="section-label">พื้นที่ที่เลือก</p>
+            <h2 id="detailProvince">-</h2>
+            <p id="detailTime" class="detail-time">-</p>
+            <div class="detail-value">
+              <strong id="detailPm25">-</strong>
+              <span>µg/m³</span>
+            </div>
+            <p id="detailLevel" class="risk-pill">-</p>
+            <dl class="weather-grid">
+              <div>
+                <dt>AQI ประมาณ</dt>
+                <dd id="detailAqi">-</dd>
+              </div>
+              <div>
+                <dt>อุณหภูมิ</dt>
+                <dd id="detailTemp">-</dd>
+              </div>
+              <div>
+                <dt>ความชื้น</dt>
+                <dd id="detailHumidity">-</dd>
+              </div>
+              <div>
+                <dt>ลม</dt>
+                <dd id="detailWind">-</dd>
+              </div>
+            </dl>
+          </section>
+
+          <section class="hourly-section">
+            <div class="section-heading">
+              <p class="section-label">แนวโน้ม 24 ชั่วโมง</p>
+              <span id="hourlyProvince">-</span>
+            </div>
+            <div id="hourlyBars" class="hourly-bars" aria-label="กราฟ PM2.5 รายชั่วโมง"></div>
+          </section>
+
+          <section class="ranking-section">
+            <div class="section-heading">
+              <p class="section-label">อันดับค่าฝุ่น</p>
+              <span id="recordCount">-</span>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>จังหวัด</th>
+                    <th>PM2.5</th>
+                    <th>ระดับ</th>
+                  </tr>
+                </thead>
+                <tbody id="provinceRows"></tbody>
+              </table>
+            </div>
+          </section>
+        </aside>
+      </main>
+
+      <footer class="footnote">
+        แบบจำลองเริ่มต้นเป็น baseline เชิงฤดูกาลและสภาพอากาศจำลอง สำหรับต่อยอดด้วยข้อมูลจริงจาก Air4Thai/IQAir และฝึกโมเดล scikit-learn
+      </footer>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
