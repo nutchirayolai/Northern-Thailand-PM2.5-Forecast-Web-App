@@ -64,17 +64,13 @@ init();
 
 async function init() {
   try {
-    const [geoResponse, forecastResponse] = await Promise.all([
-      fetch("data/northern-thailand.geojson"),
-      fetch("data/forecast_index.json"),
+    const [loadedGeojson, loadedForecastPayload] = await Promise.all([
+      fetchJsonFromCandidates(["data/northern-thailand.geojson", "northern-thailand.geojson"]),
+      fetchJsonFromCandidates(["data/forecast_index.json", "forecast_index.json"]),
     ]);
 
-    if (!geoResponse.ok || !forecastResponse.ok) {
-      throw new Error("Data files are not available");
-    }
-
-    geojson = await geoResponse.json();
-    forecastPayload = await forecastResponse.json();
+    geojson = loadedGeojson;
+    forecastPayload = loadedForecastPayload;
     provinceByCode = new Map(forecastPayload.metadata.provinces.map((province) => [province.code, province]));
     initializeForecastIndex();
     setupControls();
@@ -326,11 +322,7 @@ async function ensureMonthLoaded(date) {
 }
 
 async function fetchMonth(month) {
-  const response = await fetch(`data/${month.file}`);
-  if (!response.ok) {
-    throw new Error(`Cannot load forecast month: ${month.key}`);
-  }
-  const payload = await response.json();
+  const payload = await fetchJsonFromCandidates(getMonthCandidatePaths(month));
   if (!loadedMonths.has(month.key)) {
     addForecastRecords(payload.records);
     loadedMonths.set(month.key, payload);
@@ -550,6 +542,33 @@ function formatHour(hour) {
 function getProvinceName(recordOrCode) {
   const code = typeof recordOrCode === "string" ? recordOrCode : recordOrCode.province_code;
   return provinceByCode.get(code)?.name_th ?? code;
+}
+
+async function fetchJsonFromCandidates(paths) {
+  const uniquePaths = [...new Set(paths.filter(Boolean))];
+  for (const path of uniquePaths) {
+    try {
+      const response = await fetch(path);
+      if (response.ok) {
+        return await response.json();
+      }
+    } catch (error) {
+      // Try the next candidate path.
+    }
+  }
+  throw new Error(`Cannot load data from: ${uniquePaths.join(", ")}`);
+}
+
+function getMonthCandidatePaths(month) {
+  const file = month.file || `${month.key}.json`;
+  const filename = file.split("/").pop();
+  return [
+    `data/${file}`,
+    file,
+    filename,
+    `data/forecasts/${filename}`,
+    `forecasts/${filename}`,
+  ];
 }
 
 function hydrateRecord(record) {
